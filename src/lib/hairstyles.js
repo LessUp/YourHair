@@ -1,46 +1,50 @@
-/**
- * 发型数据配置
- * 
- * 如何添加新的发型：
- * 1. 将你的透明背景 PNG 图片放入 public/hairstyles/ 文件夹
- * 2. 在下方数组中添加一个新的对象：
- *    {
- *      id: 'my-new-style',
- *      name: '我的新发型',
- *      src: '/hairstyles/my-new-style.png', // 确保文件名匹配
- *    }
- */
-
 export const hairstyles = [
-  { 
-    id: 'short-black', 
-    name: '黑色波波头', 
+  {
+    id: 'short-black',
+    name: '自然黑短发',
     src: '/hairstyles/short-black.svg',
-    category: 'short'
+    category: 'short',
   },
-  { 
-    id: 'long-brown', 
-    name: '棕色长卷发', 
-    src: '/hairstyles/long-brown.svg',
-    category: 'long'
+  {
+    id: 'short-blue',
+    name: '潮流蓝碎发',
+    src: '/hairstyles/short-blue.svg',
+    category: 'short',
   },
-  { 
-    id: 'spiky-silver', 
-    name: '银色短碎发', 
+  {
+    id: 'spiky-silver',
+    name: '银灰造型',
     src: '/hairstyles/spiky-silver.svg',
-    category: 'short'
+    category: 'short',
   },
-  { 
-    id: 'afro-black', 
-    name: '黑色爆炸头', 
+  {
+    id: 'long-brown',
+    name: '优雅棕长发',
+    src: '/hairstyles/long-brown.svg',
+    category: 'long',
+  },
+  {
+    id: 'long-blonde',
+    name: '金色大波浪',
+    src: '/hairstyles/long-blonde.svg',
+    category: 'long',
+  },
+  {
+    id: 'bob-purple',
+    name: '紫色波波头',
+    src: '/hairstyles/bob-purple.svg',
+    category: 'short',
+  },
+  {
+    id: 'curly-red',
+    name: '复古红卷发',
+    src: '/hairstyles/curly-red.svg',
+    category: 'curly',
+  },
+  {
+    id: 'afro-black',
+    name: '嘻哈爆炸头',
     src: '/hairstyles/afro-black.svg',
-    category: 'curly'
+    category: 'curly',
   },
-  // 示例：当你有了真实 PNG 后，取消注释并修改文件名
-  // { 
-  //   id: 'real-wig-01', 
-  //   name: '真实长发', 
-  //   src: '/hairstyles/real-wig-01.png',
-  //   category: 'long'
-  // },
 ];

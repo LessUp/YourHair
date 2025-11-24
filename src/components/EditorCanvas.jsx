@@ -120,7 +120,8 @@ export function EditorCanvas({
                     transform: `
                       translate(${transform.x}px, ${transform.y}px) 
                       rotate(${transform.rotate}deg) 
-                      scale(${transform.scale})
+                      scaleX(${transform.flip ? -transform.scale : transform.scale})
+                      scaleY(${transform.scale})
                     `,
                     width: '80%', // Initial relative size
                     height: 'auto',
