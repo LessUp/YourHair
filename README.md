@@ -8,16 +8,27 @@ An online **Virtual Hair Salon** built with React + Vite, allowing users to prev
 
 ## ✨ 特性 Features
 
+### 🤖 AI 智能融合（v2.0 新功能）
+- **人脸检测**: 使用 face-api.js 自动检测人脸位置和68个关键点
+- **人像分割**: 使用 TensorFlow.js + MediaPipe 进行精确的人像分割
+- **智能对齐**: AI 自动计算发型位置、角度和大小
+- **头发区域提取**: 智能识别头发区域，实现精准融合
+- **深度学习**: 基于深度神经网络的图像处理
+
 ### 🎨 高级图像融合功能
 - **头像上传**: 支持上传真实照片，本地处理，隐私安全
 - **发型融合**: 实时预览发型与照片的融合效果
 - **透明度调整**: 调整发型透明度（推荐85%），查看与原发型的自然融合
 - **10种混合模式**: 正片叠底、滤色、叠加、柔光等专业混合模式
+- **颜色调整**: 色调、饱和度、亮度调整
+- **边缘羽化**: 平滑的边缘过渡效果
 - **双渲染引擎**: 
   - CSS模式：快速预览，性能优秀
   - Canvas模式：高级融合，专业级效果
 
 ### 🎯 核心功能
+- ✅ AI 人脸检测和自动对齐
+- ✅ 深度学习人像分割
 - ✅ 拖拽调整发型位置
 - ✅ 缩放、旋转、水平翻转
 - ✅ 实时预览融合效果
@@ -26,18 +37,33 @@ An online **Virtual Hair Salon** built with React + Vite, allowing users to prev
 - ✅ 本地运行，照片不上传服务器
 
 ### 🎨 发型库
-- 短发系列：自然黑短发、潮流蓝碎发、银灰造型等
-- 长发系列：优雅棕长发、金色大波浪等
-- 个性卷发：复古红卷发、嘻哈爆炸头等
+- **示例发型库**: 8种示例发型（SVG格式）
+- **真实发型库**: 20+种分类发型（支持自定义扩展）
+  - 短发系列：波波头、精灵短发、层次短发
+  - 中长发系列：波浪中长发、直发、空气刘海
+  - 长发系列：黑长直、大波浪、渐变色
+  - 男士发型：经典短发、侧削渐变、复古油头
+  - 个性发型：彩虹渐变、粉色梦幻、蓝色海洋
 
 ---
 
 ## 技术栈 Tech Stack
 
+### 核心框架
 - **Framework**: React 18
-- **Build Tool**: Vite
-- **Styling / UI**: Tailwind CSS（以及其他自定义样式方案）
-- **Icons & Utils**: lucide-react, clsx, tailwind-merge, html-to-image 等
+- **Build Tool**: Vite 5
+- **Styling**: Tailwind CSS 3
+
+### AI/ML 库
+- **TensorFlow.js**: 深度学习推理引擎
+- **face-api.js**: 人脸检测和关键点定位
+- **@tensorflow-models/body-segmentation**: 人像分割
+- **@mediapipe/selfie_segmentation**: MediaPipe 分割模型
+
+### 工具库
+- **lucide-react**: 图标库
+- **html-to-image**: 图像导出
+- **clsx, tailwind-merge**: 样式工具
 
 ---
 

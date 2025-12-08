@@ -268,4 +268,74 @@ useEffect(() => {
 - **输入**: 人脸区域图像
 - **输出**: 68个关键点坐标
 - **模型大小**: ~350KB
-- **推理速度**: ~20ms (G
+- **推理速度**: ~20ms (GPU)
+
+### MediaPipe Selfie Segmentation
+- **输入**: 256x256 图像
+- **输出**: 256x256 分割掩码
+- **模型大小**: ~200KB
+- **推理速度**: ~15ms (GPU)
+
+## 浏览器兼容性
+
+### WebGL 支持
+- Chrome 90+: ✅ 完全支持
+- Firefox 88+: ✅ 完全支持
+- Safari 14+: ✅ 完全支持
+- Edge 90+: ✅ 完全支持
+
+### 性能要求
+- **最低**: 4GB RAM, 集成显卡
+- **推荐**: 8GB RAM, 独立显卡
+- **最佳**: 16GB RAM, NVIDIA GPU
+
+## 隐私安全
+
+### 本地处理
+- ✅ 所有 AI 推理在浏览器本地完成
+- ✅ 图像不上传到任何服务器
+- ✅ 模型从 CDN 加载后缓存在本地
+- ✅ 不收集任何用户数据
+
+### 数据流
+```
+用户图像 → 浏览器内存 → TensorFlow.js → AI 推理 → 结果渲染
+                ↓
+            刷新页面后清空
+```
+
+## 未来改进
+
+### 短期计划
+- [ ] 添加更多人脸关键点（106点）
+- [ ] 优化头发分割精度
+- [ ] 支持多人脸检测
+- [ ] 添加发型推荐 AI
+
+### 长期计划
+- [ ] 3D 人脸重建
+- [ ] 实时视频处理
+- [ ] GAN 发型生成
+- [ ] 发型迁移学习
+
+## 参考资料
+
+### 论文
+1. "Face Detection with the Faster R-CNN" - Ren et al.
+2. "Semantic Image Segmentation with Deep Convolutional Nets" - Chen et al.
+3. "Poisson Image Editing" - Pérez et al.
+
+### 开源项目
+- [face-api.js](https://github.com/justadudewhohacks/face-api.js)
+- [TensorFlow.js](https://github.com/tensorflow/tfjs)
+- [MediaPipe](https://github.com/google/mediapipe)
+
+### 文档
+- [TensorFlow.js 官方文档](https://www.tensorflow.org/js)
+- [face-api.js 文档](https://justadudewhohacks.github.io/face-api.js/docs/index.html)
+- [MediaPipe 文档](https://google.github.io/mediapipe/)
+
+---
+
+**文档版本**: v2.0.0  
+**最后更新**: 2024-12-08
