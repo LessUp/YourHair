@@ -1,11 +1,11 @@
 import React, { useRef, useState, useEffect } from 'react';
 import { Upload, Image as ImageIcon, Move } from 'lucide-react';
 
-export function EditorCanvas({ 
-  userImage, 
-  selectedHairstyle, 
-  transform, 
-  onTransformChange, 
+export function EditorCanvas({
+  userImage,
+  selectedHairstyle,
+  transform,
+  onTransformChange,
   onUpload,
   canvasRef
 }) {
@@ -24,13 +24,13 @@ export function EditorCanvas({
   };
 
   const handleTouchStart = (e) => {
-     if (!selectedHairstyle) return;
-     setIsDragging(true);
-     const touch = e.touches[0];
-     setDragStart({
-       x: touch.clientX - transform.x,
-       y: touch.clientY - transform.y
-     });
+    if (!selectedHairstyle) return;
+    setIsDragging(true);
+    const touch = e.touches[0];
+    setDragStart({
+      x: touch.clientX - transform.x,
+      y: touch.clientY - transform.y
+    });
   }
 
   useEffect(() => {
@@ -71,7 +71,7 @@ export function EditorCanvas({
 
   return (
     <div className="bg-zinc-900 p-6 rounded-xl shadow-2xl flex flex-col items-center justify-center h-full relative overflow-hidden">
-      <div 
+      <div
         ref={canvasRef}
         className="relative w-full max-w-[500px] aspect-[3/4] bg-zinc-800 rounded-lg overflow-hidden border-2 border-dashed border-zinc-700 flex items-center justify-center shadow-inner group"
       >
@@ -84,7 +84,7 @@ export function EditorCanvas({
             <p className="text-sm text-zinc-500 mb-8 max-w-xs">
               建议使用正脸照片，光线充足，效果最佳。
             </p>
-            <button 
+            <button
               onClick={onUpload}
               className="px-8 py-3 bg-pink-600 text-white rounded-full font-medium hover:bg-pink-500 transition-all shadow-lg hover:shadow-pink-500/30 flex items-center gap-2"
             >
@@ -95,18 +95,22 @@ export function EditorCanvas({
         ) : (
           <>
             {/* User Photo Layer */}
-            <img 
-              src={userImage} 
-              alt="User" 
-              className="absolute inset-0 w-full h-full object-cover pointer-events-none" 
+            <img
+              src={userImage}
+              alt="User"
+              className="absolute inset-0 w-full h-full object-cover pointer-events-none"
             />
-            
+
             {/* Guide Overlay (Only when idle/adjusting?) - Optional */}
-            
+
             {/* Hairstyle Overlay Layer */}
             {selectedHairstyle && (
-              <div 
+              <div
                 className="absolute inset-0 flex items-center justify-center overflow-hidden pointer-events-none"
+                style={{
+                  mixBlendMode: transform.blendMode,
+                  opacity: transform.opacity,
+                }}
               >
                 {/* Wrapper to handle drag events specifically on the element */}
                 <div
@@ -128,13 +132,13 @@ export function EditorCanvas({
                     position: 'relative', // needed for transform
                   }}
                 >
-                  <img 
-                    src={selectedHairstyle.src} 
+                  <img
+                    src={selectedHairstyle.src}
                     alt="Hairstyle"
                     className="w-full h-auto drop-shadow-2xl"
                     style={{ pointerEvents: 'none' }} // Image itself shouldn't capture events, the wrapper does
                   />
-                  
+
                   {/* Visual feedback when hovering/active */}
                   <div className={`
                     absolute inset-0 border-2 border-pink-500/50 rounded-lg transition-opacity
@@ -146,7 +150,7 @@ export function EditorCanvas({
           </>
         )}
       </div>
-      
+
       {/* Hint */}
       {userImage && selectedHairstyle && (
         <div className="absolute bottom-8 bg-black/50 backdrop-blur-sm px-4 py-2 rounded-full text-xs text-white/80 pointer-events-none">
