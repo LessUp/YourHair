@@ -20,7 +20,16 @@ export function fuseHairstyle(canvas, userImage, hairstyleImage, faceData, hairM
         colorAdjust = { hue: 0, saturation: 0, brightness: 0 },
         featherRadius = 10,
         autoAlign = true,
+        userTransform: userTransformOption = { x: 0, y: 0, scale: 1, rotate: 0, flip: false },
     } = options;
+
+    const userTransform = {
+        x: userTransformOption?.x ?? 0,
+        y: userTransformOption?.y ?? 0,
+        scale: userTransformOption?.scale ?? 1,
+        rotate: userTransformOption?.rotate ?? 0,
+        flip: userTransformOption?.flip ?? false,
+    };
 
     const width = canvas.width;
     const height = canvas.height;
@@ -28,18 +37,17 @@ export function fuseHairstyle(canvas, userImage, hairstyleImage, faceData, hairM
     // 1. 绘制原始用户照片
     ctx.drawImage(userImage, 0, 0, width, height);
 
-    if (!faceData) {
-        // 如果没有人脸数据，使用简单叠加
-        ctx.globalAlpha = opacity;
-        ctx.globalCompositeOperation = blendMode;
-        ctx.drawImage(hairstyleImage, 0, 0, width, height);
-        ctx.globalAlpha = 1;
-        ctx.globalCompositeOperation = 'source-over';
-        return;
-    }
+    const baseTransform = faceData
+        ? calculateHairstyleTransform(faceData, hairstyleImage, width, height, autoAlign)
+        : calculateDefaultHairstyleTransform(hairstyleImage, width, height);
 
-    // 2. 计算发型位置和变换
-    const transform = calculateHairstyleTransform(faceData, hairstyleImage, width, height, autoAlign);
+    const transform = {
+        x: baseTransform.x + userTransform.x,
+        y: baseTransform.y + userTransform.y,
+        rotation: baseTransform.rotation + userTransform.rotate,
+        scaleX: baseTransform.scaleX * userTransform.scale * (userTransform.flip ? -1 : 1),
+        scaleY: baseTransform.scaleY * userTransform.scale,
+    };
 
     // 3. 创建临时画布用于发型处理
     const tempCanvas = document.createElement('canvas');
@@ -81,7 +89,15 @@ export function fuseHairstyle(canvas, userImage, hairstyleImage, faceData, hairM
  * 计算发型变换参数
  */
 function calculateHairstyleTransform(faceData, hairstyleImage, canvasWidth, canvasHeight, autoAlign) {
-    const { box, faceAngle, foreheadCenter, hairRegion } = faceData;
+    const { faceAngle, foreheadCenter, hairRegion } = faceData || {};
+
+    if (autoAlign === false) {
+        return calculateDefaultHairstyleTransform(hairstyleImage, canvasWidth, canvasHeight);
+    }
+
+    if (!hairRegion || !foreheadCenter) {
+        return calculateDefaultHairstyleTransform(hairstyleImage, canvasWidth, canvasHeight);
+    }
 
     // 计算缩放比例
     const targetWidth = hairRegion.width * 1.2;
@@ -101,6 +117,20 @@ function calculateHairstyleTransform(faceData, hairstyleImage, canvasWidth, canv
         scaleX,
         scaleY,
         rotation,
+    };
+}
+
+function calculateDefaultHairstyleTransform(hairstyleImage, canvasWidth, canvasHeight) {
+    const targetWidth = canvasWidth * 0.8;
+    const scaleX = targetWidth / hairstyleImage.width;
+    const scaleY = scaleX;
+
+    return {
+        x: canvasWidth / 2,
+        y: canvasHeight * 0.3,
+        scaleX,
+        scaleY,
+        rotation: 0,
     };
 }
 
@@ -176,7 +206,7 @@ function applyMaskToCanvas(ctx, mask, width, height, featherRadius) {
     const maskData = mask.data;
 
     // 创建羽化掩码
-    const featheredMask = featherMaskData(maskData, width, height, featherRadius);
+    const featheredMask = featherRadius > 0 ? featherMaskData(maskData, width, height, featherRadius) : maskData;
 
     for (let i = 0; i < data.length; i += 4) {
         const maskAlpha = featheredMask[i + 3] / 255;
@@ -190,6 +220,10 @@ function applyMaskToCanvas(ctx, mask, width, height, featherRadius) {
  * 羽化掩码数据
  */
 function featherMaskData(maskData, width, height, radius) {
+    if (!(radius > 0)) {
+        return maskData;
+    }
+
     const result = new Uint8ClampedArray(maskData);
 
     // 简化的高斯模糊

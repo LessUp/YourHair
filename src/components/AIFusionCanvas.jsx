@@ -38,6 +38,10 @@ export function AIFusionCanvas({
     const hairstyleImageRef = useRef(null);
     const containerRef = useRef(null);
 
+    const baseCanvasRef = useRef(null);
+    const maskSrcCanvasRef = useRef(null);
+    const maskDstCanvasRef = useRef(null);
+
     // 加载 AI 模型
     useEffect(() => {
         if (!aiEnabled) return;
@@ -117,15 +121,6 @@ export function AIFusionCanvas({
             if (face) {
                 setFaceData(face);
                 onFaceDetected?.(face);
-
-                // 自动调整发型位置
-                if (face.hairRegion) {
-                    const autoTransform = calculateAutoTransform(face, img);
-                    onTransformChange?.({
-                        ...transform,
-                        ...autoTransform,
-                    });
-                }
             } else {
                 setStatusMessage('未检测到人脸，将使用手动模式');
             }
@@ -177,102 +172,151 @@ export function AIFusionCanvas({
         const canvas = internalCanvasRef.current;
         if (!canvas || !userImageRef.current) return;
 
-        const ctx = canvas.getContext('2d');
         const rect = canvas.getBoundingClientRect();
+        const dpr = window.devicePixelRatio || 1;
+        const canvasWidth = Math.max(1, Math.round(rect.width * dpr));
+        const canvasHeight = Math.max(1, Math.round(rect.height * dpr));
 
-        // 设置画布尺寸
-        canvas.width = rect.width * 2;
-        canvas.height = rect.height * 2;
-        ctx.scale(2, 2);
+        canvas.width = canvasWidth;
+        canvas.height = canvasHeight;
 
         const userImg = userImageRef.current;
         const hairstyleImg = hairstyleImageRef.current;
 
-        // 清空画布
-        ctx.clearRect(0, 0, rect.width, rect.height);
+        const baseCanvas = baseCanvasRef.current || document.createElement('canvas');
+        baseCanvasRef.current = baseCanvas;
+        baseCanvas.width = canvasWidth;
+        baseCanvas.height = canvasHeight;
+        const baseCtx = baseCanvas.getContext('2d');
+        baseCtx.clearRect(0, 0, canvasWidth, canvasHeight);
 
-        // 绘制用户图片
         const aspectRatio = userImg.width / userImg.height;
-        const canvasAspect = rect.width / rect.height;
+        const canvasAspect = canvasWidth / canvasHeight;
         let drawWidth, drawHeight, offsetX, offsetY;
 
         if (aspectRatio > canvasAspect) {
-            drawHeight = rect.height;
+            drawHeight = canvasHeight;
             drawWidth = drawHeight * aspectRatio;
-            offsetX = (rect.width - drawWidth) / 2;
+            offsetX = (canvasWidth - drawWidth) / 2;
             offsetY = 0;
         } else {
-            drawWidth = rect.width;
+            drawWidth = canvasWidth;
             drawHeight = drawWidth / aspectRatio;
             offsetX = 0;
-            offsetY = (rect.height - drawHeight) / 2;
+            offsetY = (canvasHeight - drawHeight) / 2;
         }
 
-        ctx.drawImage(userImg, offsetX, offsetY, drawWidth, drawHeight);
+        baseCtx.drawImage(userImg, offsetX, offsetY, drawWidth, drawHeight);
 
-        // 绘制人脸检测框（调试用）
-        if (faceData && faceData.box) {
-            const scaleX = drawWidth / userImg.width;
-            const scaleY = drawHeight / userImg.height;
+        const scaleX = drawWidth / userImg.width;
+        const scaleY = drawHeight / userImg.height;
+        const mapPoint = (p) => ({
+            x: offsetX + p.x * scaleX,
+            y: offsetY + p.y * scaleY,
+        });
 
-            // 绘制人脸框
+        const canvasFaceData = faceData
+            ? {
+                ...faceData,
+                box: faceData.box
+                    ? {
+                        x: offsetX + faceData.box.x * scaleX,
+                        y: offsetY + faceData.box.y * scaleY,
+                        width: faceData.box.width * scaleX,
+                        height: faceData.box.height * scaleY,
+                    }
+                    : null,
+                hairRegion: faceData.hairRegion
+                    ? {
+                        x: offsetX + faceData.hairRegion.x * scaleX,
+                        y: offsetY + faceData.hairRegion.y * scaleY,
+                        width: faceData.hairRegion.width * scaleX,
+                        height: faceData.hairRegion.height * scaleY,
+                    }
+                    : null,
+                foreheadCenter: faceData.foreheadCenter ? mapPoint(faceData.foreheadCenter) : null,
+                faceCenter: faceData.faceCenter ? mapPoint(faceData.faceCenter) : null,
+                landmarks: faceData.landmarks
+                    ? Object.fromEntries(
+                        Object.entries(faceData.landmarks).map(([key, pts]) => [
+                            key,
+                            Array.isArray(pts) ? pts.map(mapPoint) : pts,
+                        ])
+                    )
+                    : null,
+            }
+            : null;
+
+        let canvasHairMask = null;
+        if (hairMask) {
+            const maskSrcCanvas = maskSrcCanvasRef.current || document.createElement('canvas');
+            maskSrcCanvasRef.current = maskSrcCanvas;
+            maskSrcCanvas.width = hairMask.width;
+            maskSrcCanvas.height = hairMask.height;
+            const maskSrcCtx = maskSrcCanvas.getContext('2d');
+            maskSrcCtx.putImageData(hairMask, 0, 0);
+
+            const maskDstCanvas = maskDstCanvasRef.current || document.createElement('canvas');
+            maskDstCanvasRef.current = maskDstCanvas;
+            maskDstCanvas.width = canvasWidth;
+            maskDstCanvas.height = canvasHeight;
+            const maskDstCtx = maskDstCanvas.getContext('2d');
+            maskDstCtx.clearRect(0, 0, canvasWidth, canvasHeight);
+            maskDstCtx.drawImage(maskSrcCanvas, offsetX, offsetY, drawWidth, drawHeight);
+            canvasHairMask = maskDstCtx.getImageData(0, 0, canvasWidth, canvasHeight);
+        }
+
+        if (!hairstyleImg) {
+            const ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, canvasWidth, canvasHeight);
+            ctx.drawImage(baseCanvas, 0, 0);
+            return;
+        }
+
+        fuseHairstyle(canvas, baseCanvas, hairstyleImg, canvasFaceData, canvasHairMask, {
+            opacity: transform.opacity ?? 0.85,
+            blendMode: transform.blendMode || 'normal',
+            colorAdjust: transform.colorAdjust || { hue: 0, saturation: 0, brightness: 0 },
+            featherRadius: (transform.featherRadius ?? 10) * dpr,
+            autoAlign: transform.autoAlign !== false,
+            userTransform: {
+                x: (transform.x ?? 0) * dpr,
+                y: (transform.y ?? 0) * dpr,
+                scale: transform.scale ?? 1,
+                rotate: transform.rotate ?? 0,
+                flip: transform.flip ?? false,
+            },
+        });
+
+        if (canvasFaceData && canvasFaceData.box) {
+            const ctx = canvas.getContext('2d');
+            ctx.save();
+            ctx.globalCompositeOperation = 'source-over';
+            ctx.globalAlpha = 1;
             ctx.strokeStyle = 'rgba(0, 255, 0, 0.5)';
-            ctx.lineWidth = 2;
+            ctx.lineWidth = 2 * dpr;
             ctx.strokeRect(
-                offsetX + faceData.box.x * scaleX,
-                offsetY + faceData.box.y * scaleY,
-                faceData.box.width * scaleX,
-                faceData.box.height * scaleY
+                canvasFaceData.box.x,
+                canvasFaceData.box.y,
+                canvasFaceData.box.width,
+                canvasFaceData.box.height
             );
 
-            // 绘制头发区域
-            if (faceData.hairRegion) {
+            if (canvasFaceData.hairRegion) {
                 ctx.strokeStyle = 'rgba(255, 0, 255, 0.5)';
-                ctx.setLineDash([5, 5]);
+                ctx.setLineDash([5 * dpr, 5 * dpr]);
                 ctx.strokeRect(
-                    offsetX + faceData.hairRegion.x * scaleX,
-                    offsetY + faceData.hairRegion.y * scaleY,
-                    faceData.hairRegion.width * scaleX,
-                    faceData.hairRegion.height * scaleY
+                    canvasFaceData.hairRegion.x,
+                    canvasFaceData.hairRegion.y,
+                    canvasFaceData.hairRegion.width,
+                    canvasFaceData.hairRegion.height
                 );
                 ctx.setLineDash([]);
             }
-        }
-
-        // 绘制发型
-        if (hairstyleImg) {
-            ctx.save();
-
-            // 应用混合模式和透明度
-            ctx.globalCompositeOperation = transform.blendMode || 'normal';
-            ctx.globalAlpha = transform.opacity || 0.85;
-
-            // 计算发型尺寸和位置
-            const hairWidth = rect.width * 0.8 * transform.scale;
-            const hairHeight = (hairstyleImg.height / hairstyleImg.width) * hairWidth;
-
-            const centerX = rect.width / 2 + transform.x;
-            const centerY = rect.height * 0.3 + transform.y;
-
-            // 应用变换
-            ctx.translate(centerX, centerY);
-            ctx.rotate((transform.rotate * Math.PI) / 180);
-            if (transform.flip) {
-                ctx.scale(-1, 1);
-            }
-
-            // 绘制发型
-            ctx.drawImage(
-                hairstyleImg,
-                -hairWidth / 2,
-                -hairHeight / 2,
-                hairWidth,
-                hairHeight
-            );
 
             ctx.restore();
         }
-    }, [transform, faceData]);
+    }, [transform, faceData, hairMask]);
 
     // 监听变换变化
     useEffect(() => {
